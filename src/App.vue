@@ -1,60 +1,100 @@
 <template>
-  <v-app>
-    <v-app-bar
-      app
-      color="primary"
-      dark
-    >
-      <div class="d-flex align-center">
-        <v-img
-          alt="Vuetify Logo"
-          class="shrink mr-2"
-          contain
-          src="https://cdn.vuetifyjs.com/images/logos/vuetify-logo-dark.png"
-          transition="scale-transition"
-          width="40"
-        />
-
-        <v-img
-          alt="Vuetify Name"
-          class="shrink mt-1 hidden-sm-and-down"
-          contain
-          min-width="100"
-          src="https://cdn.vuetifyjs.com/images/logos/vuetify-name-dark.png"
-          width="100"
-        />
-      </div>
-
-      <v-spacer></v-spacer>
-
-      <v-btn
-        href="https://github.com/vuetifyjs/vuetify/releases/latest"
-        target="_blank"
-        text
-      >
-        <span class="mr-2">Latest Release</span>
-        <v-icon>mdi-open-in-new</v-icon>
-      </v-btn>
-    </v-app-bar>
-
-    <v-main>
-      <HelloWorld/>
-    </v-main>
-  </v-app>
+	<v-app>
+		<v-main class="main">
+			<v-row justify="center" align="start">
+				<FormComponent
+					:user="user"
+					:isediting="isEditing"
+					@save="saveData"
+					@clear="clearForm"
+				/>
+				<UserListComponent
+					:users="users"
+					@delete="deleteData"
+					@edit="editData"
+				/>
+			</v-row>
+		</v-main>
+	</v-app>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld';
+	import FormComponent from "./components/FormComponent.vue";
+	import UserListComponent from "./components/UsersListComponent.vue";
 
-export default {
-  name: 'App',
+	export default {
+		name: "App",
 
-  components: {
-    HelloWorld,
-  },
+		components: {
+			FormComponent,
+			UserListComponent,
+		},
 
-  data: () => ({
-    //
-  }),
-};
+		data: () => ({
+			isEditing: false,
+			user: {
+				name: "",
+				avatar: "",
+				details: "",
+			},
+			users: [],
+		}),
+		methods: {
+			clearForm() {
+				this.user = {
+					name: "",
+					avatar: "",
+					details: "",
+				};
+				this.isEditing = false;
+			},
+
+			editData(id) {
+				this.isEditing = true;
+				let user = Object.assign(
+					{},
+					this.users.find((user) => user.id == id)
+				);
+				this.user = user;
+			},
+			deleteData(id) {
+				this.users = this.users.filter((user) => user.id != id);
+				localStorage.setItem("users", JSON.stringify(this.users));
+			},
+			saveData() {
+				let newUser = Object.assign({}, this.user);
+
+				if (!this.isEditing) {
+					newUser.id = parseInt(Math.random() * 101);
+
+					this.users.push(newUser);
+				} else {
+					let newUsers = Object.assign([], this.users);
+
+					this.users = newUsers.map((user) =>
+						user.id == newUser.id ? newUser : user
+					);
+					this.isEditing = false;
+				}
+				this.user = {
+					name: "",
+					avatar: "",
+					details: "",
+				};
+				localStorage.setItem("users", JSON.stringify(this.users));
+			},
+		},
+
+		mounted() {
+			if (localStorage.getItem("users")) {
+				this.users = JSON.parse(localStorage.getItem("users"));
+				console.log(this.users);
+			}
+		},
+	};
 </script>
+<style scoped>
+	.main {
+		background-color: rgb(255, 255, 255);
+	}
+</style>
